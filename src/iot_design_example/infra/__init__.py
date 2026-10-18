@@ -1,4 +1,5 @@
 from enum import Enum
+from pika import BlockingConnection, ConnectionParameters
 from pika.channel import Channel
 from pika.exchange_type import ExchangeType
 
@@ -20,3 +21,12 @@ def declare_exchanges(channel: Channel):
     channel.exchange_declare(
         exchange=Exchange.anomalies, exchange_type=ExchangeType.fanout
     )
+
+
+class Connection:
+    def __enter__(self) -> BlockingConnection:
+        self.CONNECTION = BlockingConnection(ConnectionParameters("localhost"))
+        return self.CONNECTION
+
+    def __exit__(self, exc_type, exc, tb):
+        self.CONNECTION.close()

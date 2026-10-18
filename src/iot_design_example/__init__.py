@@ -1,60 +1,65 @@
 from multiprocessing import Process
-import pika
+
+from iot_design_example.consumers import MonitorConsumer
+from iot_design_example.infra import Connection, declare_exchanges
+from iot_design_example.producers import (
+    MockHumidityProducer,
+    MockPressureProducer,
+    MockTemperatureProducer,
+)
 
 
-def run_sender():
-    connection = pika.BlockingConnection(pika.ConnectionParameters("localhost"))
-    try:
+def run_mock_temperature_sensor():
+    with Connection() as connection:
         channel = connection.channel()
+        declare_exchanges(channel)
 
-        channel.queue_declare(
-            queue="logs", durable=True, arguments={"x-queue-type": "quorum"}
-        )
-
-        for i in range(5):
-            channel.basic_publish(
-                exchange="",
-                routing_key="logs",
-                body=f"Log Entry {i}",
-                properties=pika.BasicProperties(
-                    delivery_mode=pika.DeliveryMode.Persistent
-                ),
-            )
-    finally:
-        connection.close()
+        producer = MockTemperatureProducer(channel)
+        producer.start_producing()
 
 
-def run_receiver():
-    connection = pika.BlockingConnection(pika.ConnectionParameters("localhost"))
-    try:
+def run_mock_pressure_sensor():
+    with Connection() as connection:
         channel = connection.channel()
+        declare_exchanges(channel)
 
-        channel.queue_declare(
-            queue="logs", durable=True, arguments={"x-queue-type": "quorum"}
-        )
+        producer = MockPressureProducer(channel)
+        producer.start_producing()
 
-        def callback(ch, method, properties, body):
-            print(body)
 
-        channel.basic_consume(queue="logs", auto_ack=True, on_message_callback=callback)
+def run_mock_humidity_sensor():
+    with Connection() as connection:
+        channel = connection.channel()
+        declare_exchanges(channel)
 
-        print(" [*] Waiting for messages. To exit press CTRL+C")
-        channel.start_consuming()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        connection.close()
+        producer = MockHumidityProducer(channel)
+        producer.start_producing()
+
+
+def run_monitor_consumer():
+    with Connection() as connection:
+        channel = connection.channel()
+        declare_exchanges(channel)
+
+        consumer = MonitorConsumer(channel)
+        consumer.start_consuming()
 
 
 def main() -> None:
-    sender = Process(target=run_sender)
-    receiver = Process(target=run_receiver)
+    consumers = [Process(target=run_monitor_consumer)]
+    producers = [
+        Process(target=run_mock_temperature_sensor),
+        Process(target=run_mock_pressure_sensor),
+        Process(target=run_mock_humidity_sensor),
+    ]
 
-    processes = [sender, receiver]
-    print("Starting sender and receiver")
-    for p in processes:
+    print("Starting consumers")
+    for p in consumers:
         p.start()
-    print("Sender and receiver running")
-    for p in processes:
+    print("Starting producers")
+    for p in producers:
+        p.start()
+    print("Consumers and producers running")
+    for p in producers + consumers:
         p.join()
     print("All processes have finished.")
