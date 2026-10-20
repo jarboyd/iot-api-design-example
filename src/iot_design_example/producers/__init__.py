@@ -3,6 +3,7 @@ from enum import Enum
 import json
 from pika.channel import Channel
 from pika import BasicProperties, DeliveryMode
+import random
 
 from iot_design_example.infra import Exchange
 
@@ -12,6 +13,9 @@ class SensorType(int, Enum):
     pressure = 1
     humidity = 2
 
+class AnomalyLevel(int, Enum):
+    warning = 0
+    critical = 1
 
 class RoutingKey(str, Enum):
     wildcard = "#"
@@ -21,10 +25,10 @@ class RoutingKey(str, Enum):
 
 
 class SensorMessage:
-    def __init__(self, sensor_id: str, timestamp: int, type: SensorType, value: float):
+    def __init__(self, sensor_id: str, timestamp: int, sensor_type: SensorType, value: float):
         self.SENSOR_ID = sensor_id
         self.TIMESTAMP = timestamp
-        self.TYPE = type
+        self.TYPE = sensor_type
         self.VALUE = value
 
     def __str__(self) -> str:
@@ -35,6 +39,44 @@ class SensorMessage:
                 "type": self.TYPE,
                 "value": self.VALUE,
             }
+        )
+
+    @staticmethod
+    def from_dict(data: dict) -> "SensorMessage":
+        return SensorMessage(
+            sensor_id=data["sensor_id"],
+            timestamp=data["timestamp"],
+            sensor_type=SensorType(data["type"]),
+            value=data["value"],
+        )
+
+class AnomalyMessage:
+    def __init__(self, sensor_id: str, timestamp: int, sensor_type: SensorType, value: float, level: AnomalyLevel):
+        self.SENSOR_ID = sensor_id
+        self.TIMESTAMP = timestamp
+        self.TYPE = sensor_type
+        self.VALUE = value
+        self.LEVEL = level
+
+    def __str__(self) -> str:
+        return json.dumps(
+            {
+                "sensor_id": self.SENSOR_ID,
+                "timestamp": self.TIMESTAMP,
+                "type": self.TYPE,
+                "value": self.VALUE,
+                "level": self.LEVEL,
+            }
+        )
+
+    @staticmethod
+    def from_dict(data: dict) -> "AnomalyMessage":
+        return AnomalyMessage(
+            sensor_id=data["sensor_id"],
+            timestamp=data["timestamp"],
+            sensor_type=SensorType(data["type"]),
+            value=data["value"],
+            level=AnomalyLevel(data["level"])
         )
 
 
@@ -63,6 +105,9 @@ class TemperatureProducer(Producer):
 class MockTemperatureProducer(TemperatureProducer):
     ID_COUNTER = 0
 
+    MIN_TEMP = -20.0
+    MAX_TEMP = 90.0
+
     def __init__(self, channel: Channel):
         super().__init__(channel)
         self.SENSOR_ID = f"temperature_{MockTemperatureProducer.ID_COUNTER}"
@@ -75,8 +120,8 @@ class MockTemperatureProducer(TemperatureProducer):
                     SensorMessage(
                         sensor_id=self.SENSOR_ID,
                         timestamp=0,
-                        type=SensorType.temperature,
-                        value=0.0,
+                        sensor_type=SensorType.temperature,
+                        value=random.uniform(MockTemperatureProducer.MIN_TEMP, MockTemperatureProducer.MAX_TEMP),
                     )
                 )
                 time.sleep(0.5)
@@ -95,6 +140,9 @@ class PressureProducer(Producer):
 class MockPressureProducer(PressureProducer):
     ID_COUNTER = 0
 
+    MIN_PRESSURE = 950.0
+    MAX_PRESSURE = 1050.0
+
     def __init__(self, channel: Channel):
         super().__init__(channel)
         self.SENSOR_ID = f"pressure_{MockPressureProducer.ID_COUNTER}"
@@ -107,8 +155,8 @@ class MockPressureProducer(PressureProducer):
                     SensorMessage(
                         sensor_id=self.SENSOR_ID,
                         timestamp=0,
-                        type=SensorType.pressure,
-                        value=0.0,
+                        sensor_type=SensorType.pressure,
+                        value=random.uniform(MockPressureProducer.MIN_PRESSURE, MockPressureProducer.MAX_PRESSURE),
                     )
                 )
                 time.sleep(0.5)
@@ -127,6 +175,9 @@ class HumidityProducer(Producer):
 class MockHumidityProducer(HumidityProducer):
     ID_COUNTER = 0
 
+    MIN_HUMIDITY = 30.0
+    MAX_HUMIDITY = 70.0
+
     def __init__(self, channel: Channel):
         super().__init__(channel)
         self.SENSOR_ID = f"humidity_{MockHumidityProducer.ID_COUNTER}"
@@ -139,8 +190,8 @@ class MockHumidityProducer(HumidityProducer):
                     SensorMessage(
                         sensor_id=self.SENSOR_ID,
                         timestamp=0,
-                        type=SensorType.humidity,
-                        value=0.0,
+                        sensor_type=SensorType.humidity,
+                        value=random.uniform(MockHumidityProducer.MIN_HUMIDITY, MockHumidityProducer.MAX_HUMIDITY),
                     )
                 )
                 time.sleep(0.5)

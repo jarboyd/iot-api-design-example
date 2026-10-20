@@ -63,3 +63,6 @@ def main() -> None:
     for p in producers + consumers:
         p.join()
     print("All processes have finished.")
+
+if __name__ == "__main__":
+    main()

@@ -2,6 +2,30 @@
 
 This repository contains the solution for exercise 1 in the API design and system integration lecture at the Ostfalia University of Applied Sciences in 2026.
 
+# Setup project
+
+Install Python 3.14 from [the official release page](https://www.python.org/downloads/release/python-3148/).
+
+Setup the virtual environment and activate it.
+
+```bash
+python -m venv .venv
+./.venv/Scripts/Activate
+```
+
+Lastly install the requirements or the package
+
+``` bash
+pip install -r requirements.txt
+```
+
+```bash
+pip install .
+```
+
+
+
+
 # Running the project
 
 Make sure a local RabbitMQ server is running, for example by spooling up the provided docker compose script.
