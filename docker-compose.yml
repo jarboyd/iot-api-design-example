@@ -1,6 +1,6 @@
 services:
   rabbitmq:
-    image: rabbitmq:latest
+    image: rabbitmq:management
     container_name: rabbitmq
     hostname: rabbitmq
     restart: always
