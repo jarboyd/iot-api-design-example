@@ -102,6 +102,9 @@ class MonitorConsumer:
         if aggregation_message.aggr_type == AggregationType.max_temperature:
             value = aggregation_message.value
             self._further_infos["max_temperature"] = f"{value[1]:.2f}°C <{value[0]}>"
+        elif aggregation_message.aggr_type == AggregationType.avg_temperature:
+            value = aggregation_message.value
+            self._further_infos["avg_temperature"] = f"{value:.2f}°C" if value is not None else "-"
 
     def _process_anomaly_message(self, body: bytes):
         anomaly_message: AnomalyMessage = AnomalyMessage.from_dict(json.loads(body.decode()))

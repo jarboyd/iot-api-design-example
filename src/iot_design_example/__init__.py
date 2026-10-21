@@ -2,7 +2,8 @@ from multiprocessing import Process
 
 from iot_design_example.consumers import (
     MonitorConsumer,
-    SensorAggregationMaxTemperaturConsumer,
+    SensorAggregationMaxTemperatureConsumer,
+    SensorAggregationAvgTemperatureConsumer,
 )
 from iot_design_example.infra import Connection, declare_exchanges
 from iot_design_example.producers import (
@@ -47,19 +48,28 @@ def run_monitor_consumer():
         consumer = MonitorConsumer(channel)
         consumer.start_consuming()
 
-def run_aggregation_consumer():
+def run_max_aggregation_consumer():
     with Connection() as connection:
         channel = connection.channel()
         declare_exchanges(channel)
 
-        consumer = SensorAggregationMaxTemperaturConsumer(channel)
+        consumer = SensorAggregationMaxTemperatureConsumer(channel)
+        consumer.start_consuming()
+
+def run_avg_aggregation_consumer():
+    with Connection() as connection:
+        channel = connection.channel()
+        declare_exchanges(channel)
+
+        consumer = SensorAggregationAvgTemperatureConsumer(channel)
         consumer.start_consuming()
 
 
 def main() -> None:
     consumers = [
         Process(target=run_monitor_consumer), 
-        Process(target=run_aggregation_consumer)
+        Process(target=run_max_aggregation_consumer),
+        Process(target=run_avg_aggregation_consumer),
     ]
     producers = [
         Process(target=run_mock_temperature_sensor),

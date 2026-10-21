@@ -3,10 +3,12 @@ from .monitor import (
     MonitorConsumer,
 )
 from .aggregration import (
-    SensorAggregationMaxTemperaturConsumer,
+    SensorAggregationMaxTemperatureConsumer,
+    SensorAggregationAvgTemperatureConsumer,
 )
 
 __all__ = [
     "MonitorConsumer",
-    "SensorAggregationMaxTemperaturConsumer"
+    "SensorAggregationMaxTemperatureConsumer",
+    "SensorAggregationAvgTemperatureConsumer",
 ]
