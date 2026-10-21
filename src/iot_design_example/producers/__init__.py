@@ -1,9 +1,12 @@
+import threading
 import time
 from enum import Enum
 import json
 from pika.channel import Channel
 from pika import BasicProperties, DeliveryMode
 import random
+
+from retry import retry
 
 from iot_design_example.infra import Exchange
 
@@ -85,13 +88,21 @@ class Producer:
         self.CHANNEL = channel
         self.ROUTING_KEY = routing_key
 
-    def _publish(self, message: SensorMessage):
+    @retry(tries=5, delay=1.58, backoff=2)
+    def __publish_with_retry(self, message: SensorMessage):
         self.CHANNEL.basic_publish(
             exchange=Exchange.sensor_values,
             routing_key=self.ROUTING_KEY,
             body=str(message),
             properties=BasicProperties(delivery_mode=DeliveryMode.Persistent),
         )
+
+    def __publish_with_thread(self, message: SensorMessage):
+        thread = threading.Thread(target=self.__publish_with_retry, args=(message,))
+        thread.start()
+
+    def _publish(self, message: SensorMessage):
+        self.__publish_with_thread(message)
 
 
 class TemperatureProducer(Producer):
