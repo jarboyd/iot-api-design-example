@@ -5,7 +5,8 @@ description = "Add your description here"
 readme = "README.md"
 authors = [
     { name = "Marvin Stier", email = "email@marvinstier.de" },
-    { name = "Justin Treulieb", email = "justin@treulieb.com" }
+    { name = "Justin Treulieb", email = "justin@treulieb.com" },
+    { name = "Jalon Lichtenberg", email = "j.lichtenberg@ostfalia.de" }
 ]
 requires-python = ">=3.14"
 dependencies = [
