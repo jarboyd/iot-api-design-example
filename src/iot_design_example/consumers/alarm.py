@@ -24,3 +24,13 @@ class AlarmConsumer:
 
             channel.basic_nack(delivery_tag=method.delivery_tag,
                                requeue=False)
+
+
+    def start_consuming(self):
+        self.channel.basic_consume(queue="alarm_queue",
+                                   on_message_callback=self.callback,
+                                   auto_ack=False)
+
+        print("Waiting for alarms on alarm_queue")
+
+        self.channel.start_consuming()
