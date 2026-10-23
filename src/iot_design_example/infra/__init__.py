@@ -8,6 +8,10 @@ class Exchange(str, Enum):
     sensor_values = "sensor_values"
     aggr_values = "aggr_values"
     anomalies = "anomalies"
+    dead_letters = "dead_letters"
+
+
+DEAD_LETTER_QUEUE = "dead_letters"
 
 
 def declare_exchanges(channel: Channel):
@@ -20,6 +24,16 @@ def declare_exchanges(channel: Channel):
     )
     channel.exchange_declare(
         exchange=Exchange.anomalies, exchange_type=ExchangeType.fanout
+    )
+    channel.exchange_declare(
+        exchange=Exchange.dead_letters,
+        exchange_type=ExchangeType.fanout,
+        durable=True,
+    )
+    channel.queue_declare(queue=DEAD_LETTER_QUEUE, durable=True)
+    channel.queue_bind(
+        exchange=Exchange.dead_letters,
+        queue=DEAD_LETTER_QUEUE,
     )
 
 

@@ -2,6 +2,7 @@ from pika.channel import Channel
 from iot_design_example.infra import Exchange
 from iot_design_example.producers import RoutingKey
 import json
+import sys
 
 from iot_design_example.producers import (
     SensorMessage,
@@ -37,18 +38,27 @@ class AnomalyDetector:
         return None
 
 class AnomalyConsumer:
+    channel: Channel
+
     def __init__(self, channel: Channel, routing_key: RoutingKey):
         self.channel = channel
         self.routing_key = routing_key
 
     def callback(self, channel, method, properties, body):
-        message = SensorMessage.from_dict(json.loads(body))
-        level = AnomalyDetector.detect(message)
+        try:
+            message = SensorMessage.from_dict(json.loads(body))
+            level = AnomalyDetector.detect(message)
 
-        if level is not None:
-            print(f"Anomaly detected: {message.SENSOR_ID}, Level: {level}")
+            if level is not None:
+                print(f"Anomaly detected: {message.SENSOR_ID}, Level: {level}")
 
-        channel.basic_ack(delivery_tag=method.delivery_tag)
+            channel.basic_ack(delivery_tag=method.delivery_tag)
+        except Exception as error:
+            print(f"[AnomalyConsumer] Error processing message: {error}", file=sys.stderr)
+            channel.basic_nack(
+                delivery_tag=method.delivery_tag,
+                requeue=False,
+            )
     
 
     def start_consuming(self):
@@ -60,7 +70,10 @@ class AnomalyConsumer:
 
         self.channel.queue_declare(queue=queue_name,
                                    durable=True,
-                                   arguments={"x-message-ttl": 60000}
+                                   arguments={
+                                       "x-message-ttl": 60000,
+                                       "x-dead-letter-exchange": Exchange.dead_letters,
+                                   }
                                    )
 
         self.channel.queue_bind(exchange=Exchange.sensor_values,

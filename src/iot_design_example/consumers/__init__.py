@@ -2,6 +2,9 @@
 from .monitor import (
     MonitorConsumer,
 )
+from .anomaly import (
+    AnomalyConsumer,
+)
 from .aggregration import (
     SensorAggregationMaxTemperatureConsumer,
     SensorAggregationAvgTemperatureConsumer,
@@ -9,6 +12,7 @@ from .aggregration import (
 
 __all__ = [
     "MonitorConsumer",
+    "AnomalyConsumer",
     "SensorAggregationMaxTemperatureConsumer",
     "SensorAggregationAvgTemperatureConsumer",
 ]
