@@ -2,6 +2,7 @@ from multiprocessing import Process
 
 from iot_design_example.consumers import (
     MonitorConsumer,
+    AnomalyConsumer,
     SensorAggregationMaxTemperatureConsumer,
     SensorAggregationAvgTemperatureConsumer,
 )
@@ -10,6 +11,7 @@ from iot_design_example.producers import (
     MockHumidityProducer,
     MockPressureProducer,
     MockTemperatureProducer,
+    RoutingKey,
 )
 
 
@@ -48,6 +50,16 @@ def run_monitor_consumer():
         consumer = MonitorConsumer(channel)
         consumer.start_consuming()
 
+
+def run_anomaly_consumer(routing_key: RoutingKey):
+    with Connection() as connection:
+        channel = connection.channel()
+        declare_exchanges(channel)
+
+        consumer = AnomalyConsumer(channel, routing_key)
+        consumer.start_consuming()
+
+
 def run_max_aggregation_consumer():
     with Connection() as connection:
         channel = connection.channel()
@@ -68,6 +80,14 @@ def run_avg_aggregation_consumer():
 def main() -> None:
     consumers = [
         Process(target=run_monitor_consumer), 
+        Process(
+            target=run_anomaly_consumer,
+            args=(RoutingKey.sensor_temperature,),
+        ),
+        Process(
+            target=run_anomaly_consumer,
+            args=(RoutingKey.sensor_pressure,),
+        ),
         Process(target=run_max_aggregation_consumer),
         Process(target=run_avg_aggregation_consumer),
     ]

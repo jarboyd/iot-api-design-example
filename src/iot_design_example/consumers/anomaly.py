@@ -3,6 +3,7 @@ from pika import BasicProperties, DeliveryMode
 from iot_design_example.infra import Exchange
 from iot_design_example.producers import RoutingKey
 import json
+import sys
 
 from iot_design_example.producers import (
     SensorMessage,
@@ -39,6 +40,8 @@ class AnomalyDetector:
         return None
 
 class AnomalyConsumer:
+    channel: Channel
+
     def __init__(self, channel: Channel, routing_key: RoutingKey):
         self.channel = channel
         self.routing_key = routing_key
@@ -74,14 +77,15 @@ class AnomalyConsumer:
                                       ),
                                       mandatory=True)
 
+
             channel.basic_ack(delivery_tag=method.delivery_tag)
-
-        except Exception as e:
-            print(f"Message error: {e}")
-
-            channel.basic_nack(delivery_tag=method.delivery_tag,
-                               requeue=False)
-
+        except Exception as error:
+            print(f"[AnomalyConsumer] Error processing message: {error}", file=sys.stderr)
+            channel.basic_nack(
+                delivery_tag=method.delivery_tag,
+                requeue=False,
+            )
+    
 
     def start_consuming(self):
         if self.routing_key == RoutingKey.sensor_temperature:
@@ -92,7 +96,10 @@ class AnomalyConsumer:
 
         self.channel.queue_declare(queue=queue_name,
                                    durable=True,
-                                   arguments={"x-message-ttl": 60000}
+                                   arguments={
+                                       "x-message-ttl": 60000,
+                                       "x-dead-letter-exchange": Exchange.dead_letters,
+                                   }
                                    )
 
         self.channel.queue_bind(exchange=Exchange.sensor_values,
