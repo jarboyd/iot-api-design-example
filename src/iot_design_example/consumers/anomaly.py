@@ -1,4 +1,5 @@
 from pika.channel import Channel
+from pika import BasicProperties, DeliveryMode
 from iot_design_example.infra import Exchange
 from iot_design_example.producers import RoutingKey
 import json
@@ -6,7 +7,8 @@ import json
 from iot_design_example.producers import (
     SensorMessage,
     SensorType,
-    AnomalyLevel
+    AnomalyLevel,
+    AnomalyMessage
 )
 
 class AnomalyDetector:
@@ -42,14 +44,44 @@ class AnomalyConsumer:
         self.routing_key = routing_key
 
     def callback(self, channel, method, properties, body):
-        message = SensorMessage.from_dict(json.loads(body))
-        level = AnomalyDetector.detect(message)
+        try:
+            message = SensorMessage.from_dict(json.loads(body))
+            level = AnomalyDetector.detect(message)
 
-        if level is not None:
-            print(f"Anomaly detected: {message.SENSOR_ID}, Level: {level}")
+            if level is not None:
+                print(f"Anomaly detected: {message.SENSOR_ID}, Level: {level}")
 
-        channel.basic_ack(delivery_tag=method.delivery_tag)
-    
+                alarm = AnomalyMessage(
+                    sensor_id=message.SENSOR_ID,
+                    timestamp=message.TIMESTAMP,
+                    sensor_type=message.TYPE,
+                    value=message.VALUE,
+                    level=level
+                )
+
+                if level == AnomalyLevel.critical:
+                    priority = 2
+                else:
+                    priority = 1
+
+
+                channel.basic_publish(exchange=Exchange.anomalies,
+                                      routing_key="",
+                                      body=str(alarm),
+                                      properties=BasicProperties(
+                                          delivery_mode=DeliveryMode.Persistent,
+                                          priority=priority
+                                      ),
+                                      mandatory=True)
+
+            channel.basic_ack(delivery_tag=method.delivery_tag)
+
+        except Exception as e:
+            print(f"Message error: {e}")
+
+            channel.basic_nack(delivery_tag=method.delivery_tag,
+                               requeue=False)
+
 
     def start_consuming(self):
         if self.routing_key == RoutingKey.sensor_temperature:
@@ -66,6 +98,8 @@ class AnomalyConsumer:
         self.channel.queue_bind(exchange=Exchange.sensor_values,
                                 queue=queue_name,
                                 routing_key=self.routing_key)
+
+        self.channel.confirm_delivery()
 
         self.channel.basic_consume(queue=queue_name,
                                    on_message_callback=self.callback,
