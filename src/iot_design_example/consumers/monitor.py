@@ -7,7 +7,8 @@ from pika.spec import Basic, BasicProperties
 from iot_design_example.infra import Exchange
 from iot_design_example.producers import (
     SensorMessage, 
-    AnomalyMessage,    
+    AnomalyMessage,
+    AnomalyLevel,    
 )
 from iot_design_example.consumers.aggregration import (
     AggregationMessage,
@@ -37,6 +38,8 @@ class MonitorConsumer:
         self._anomalies = 0
         self._processing_time_ms = 0.0
         self._processing_attempts = 0
+        self._warning_alarms = 0
+        self._critical_alarms = 0
         self._sensor_messages_by_type = {}
         self._further_infos = {}
         self._message_type_processing_funcs = {
@@ -76,6 +79,8 @@ class MonitorConsumer:
         print(" > processed:                    ", self._processed_messages)
         print(" > failed:                       ", self._failed_messages)
         print(" > anomalies/alarms:             ", self._anomalies)
+        print(" > warning_alarms:               ", self._warning_alarms)
+        print(" > critical_alarms:              ", self._critical_alarms)
         print(" > average_processing_time_ms:   ", "<TODO>")
         
         print(f"Sensor messages by type: ({len(self._sensor_messages_by_type)})")
@@ -109,6 +114,12 @@ class MonitorConsumer:
     def _process_anomaly_message(self, body: bytes):
         anomaly_message: AnomalyMessage = AnomalyMessage.from_dict(json.loads(body.decode()))
         self._anomalies += 1
+
+        if anomaly_message.LEVEL == AnomalyLevel.warning:
+            self._warning_alarms += 1
+
+        elif anomaly_message.LEVEL == AnomalyLevel.critical:
+            self._critical_alarms += 1
 
     def _process_unknown_message(self, body: bytes):   
         print(f"[Monitor] Received unknown message: {body.decode()}", file=sys.stderr)
