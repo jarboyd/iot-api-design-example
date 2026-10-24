@@ -1,5 +1,6 @@
 import json
 import sys
+import time
 
 from pika.channel import Channel
 from pika.spec import Basic, BasicProperties
@@ -81,7 +82,7 @@ class MonitorConsumer:
         print(" > anomalies/alarms:             ", self._anomalies)
         print(" > warning_alarms:               ", self._warning_alarms)
         print(" > critical_alarms:              ", self._critical_alarms)
-        print(" > average_processing_time_ms:   ", "<TODO>")
+        print(" > average_processing_time_ms:   ", f"{self._average_processing_time():.2f}")
         
         print(f"Sensor messages by type: ({len(self._sensor_messages_by_type)})")
         for sensor_type, count in self._sensor_messages_by_type.items():
@@ -134,9 +135,25 @@ class MonitorConsumer:
         properties: BasicProperties,
         body: bytes,
     ):
+        start_time = time.perf_counter()
+
         try:
             self._message_type_processing_funcs.get(method.exchange, self._process_unknown_message)(body)
             ch.basic_ack(delivery_tag=method.delivery_tag)
+            self._processed_messages += 1
         except Exception as error:
+            self._failed_messages +=1
             self._process_error_message(body, error)
             ch.basic_reject(delivery_tag=method.delivery_tag, requeue=False)
+
+        finally:
+            processing_time = (time.perf_counter() - start_time) * 1000
+
+            self._processing_time_ms += processing_time
+            self._processing_attempts += 1
+
+    def _average_processing_time(self) -> float:
+        if self._processing_attempts > 0:
+            return self._processing_time_ms / self._processing_attempts
+
+        return 0.0
