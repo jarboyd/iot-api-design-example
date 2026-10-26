@@ -67,7 +67,12 @@ class SensorAggregationMaxTemperatureConsumer:
         self.produced_by_sensor_id = None
 
     def start_consuming(self):
-        result = self._channel.queue_declare(queue="", exclusive=True)
+        result = self._channel.queue_declare(queue="",
+                                             exclusive=True,
+                                             arguments={
+                                                 "x-message-ttl": 60000,
+                                                 "x-dead-letter-exchange": Exchange.dead_letters,}
+                                            )
         queue_name = result.method.queue
         self._channel.queue_bind(
             exchange=Exchange.sensor_values,
@@ -132,7 +137,12 @@ class SensorAggregationAvgTemperatureConsumer:
         self.current_count = 0
 
     def start_consuming(self):
-        result = self._channel.queue_declare(queue="", exclusive=True)
+        result = self._channel.queue_declare(queue="",
+                                             exclusive=True,
+                                             arguments={
+                                                 "x-message-ttl": 60000,
+                                                 "x-dead-letter-exchange": Exchange.dead_letters,}
+                                            )
         queue_name = result.method.queue
         self._channel.queue_bind(
             exchange=Exchange.sensor_values,
