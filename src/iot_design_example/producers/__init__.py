@@ -88,7 +88,7 @@ class Producer:
         self.CHANNEL = channel
         self.ROUTING_KEY = routing_key
 
-    @retry(tries=5, delay=1.58, backoff=2)
+    @retry(tries=5, delay=1, backoff=2)
     def __publish_with_retry(self, message: SensorMessage):
         self.CHANNEL.basic_publish(
             exchange=Exchange.sensor_values,
@@ -130,7 +130,7 @@ class MockTemperatureProducer(TemperatureProducer):
                 self._publish(
                     SensorMessage(
                         sensor_id=self.SENSOR_ID,
-                        timestamp=0,
+                        timestamp=int(time.time()),
                         sensor_type=SensorType.temperature,
                         value=random.uniform(MockTemperatureProducer.MIN_TEMP, MockTemperatureProducer.MAX_TEMP),
                     )
@@ -165,7 +165,7 @@ class MockPressureProducer(PressureProducer):
                 self._publish(
                     SensorMessage(
                         sensor_id=self.SENSOR_ID,
-                        timestamp=0,
+                        timestamp=int(time.time()),
                         sensor_type=SensorType.pressure,
                         value=random.uniform(MockPressureProducer.MIN_PRESSURE, MockPressureProducer.MAX_PRESSURE),
                     )
@@ -200,7 +200,7 @@ class MockHumidityProducer(HumidityProducer):
                 self._publish(
                     SensorMessage(
                         sensor_id=self.SENSOR_ID,
-                        timestamp=0,
+                        timestamp=int(time.time()),
                         sensor_type=SensorType.humidity,
                         value=random.uniform(MockHumidityProducer.MIN_HUMIDITY, MockHumidityProducer.MAX_HUMIDITY),
                     )
