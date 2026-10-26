@@ -1,6 +1,9 @@
 import json
 import sys
+import os
 import time
+import atexit
+import json
 
 from pika.channel import Channel
 from pika.spec import Basic, BasicProperties
@@ -10,6 +13,7 @@ from iot_design_example.producers import (
     SensorMessage, 
     AnomalyMessage,
     AnomalyLevel,    
+    SensorType,
 )
 from iot_design_example.consumers.aggregration import (
     AggregationMessage,
@@ -18,6 +22,7 @@ from iot_design_example.consumers.aggregration import (
 
 
 class MonitorConsumer:
+    TARGET_FILE: str = "./data/monitor_results.json"
     SUMMARY_INTERVAL_SECONDS = 10
     _channel: Channel
 
@@ -48,6 +53,50 @@ class MonitorConsumer:
             Exchange.aggr_values: self._process_aggregation_message,
             Exchange.anomalies: self._process_anomaly_message,
         }
+
+        atexit.register(self.save_results)
+        self.load_results()
+
+        print("======================= START Initial Summary =======================")
+        self.print_summary()
+        print("======================= END   Initial Summary =======================")
+
+
+    def save_results(self):
+        print("Save reslts into:", self.TARGET_FILE)
+        os.makedirs(os.path.dirname(self.TARGET_FILE), exist_ok=True)
+
+        with open(self.TARGET_FILE, "w") as f:
+            json.dump(
+                {
+                    "processed_messages": self._processed_messages,
+                    "failed_messages": self._failed_messages,
+                    "anomalies": self._anomalies,
+                    "warning_alarms": self._warning_alarms,
+                    "critical_alarms": self._critical_alarms,
+                    "average_processing_time_ms": self._average_processing_time(),
+                    "sensor_messages_by_type": self._sensor_messages_by_type,
+                    "further_infos": self._further_infos,
+                },
+                f,
+                indent=2,
+            )
+
+    def load_results(self):
+        try:
+            with open(self.TARGET_FILE, "r") as f:
+                data = json.load(f)
+                self._processed_messages = data.get("processed_messages", 0)
+                self._failed_messages = data.get("failed_messages", 0)
+                self._anomalies = data.get("anomalies", 0)
+                self._warning_alarms = data.get("warning_alarms", 0)
+                self._critical_alarms = data.get("critical_alarms", 0)
+                self._processing_time_ms = data.get("average_processing_time_ms", 0.0) * data.get("processed_messages", 0)
+                self._processing_attempts = data.get("processed_messages", 0)
+                self._sensor_messages_by_type = dict(map(lambda x: (SensorType(int(x[0])), x[1]), data.get("sensor_messages_by_type", {}).items()))
+                self._further_infos = data.get("further_infos", {})
+        except FileNotFoundError:
+            pass
 
     def start_consuming(self):
         result = self._channel.queue_declare(queue="", exclusive=True)
