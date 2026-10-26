@@ -1,5 +1,6 @@
 from pika.channel import Channel
 from iot_design_example.producers import AnomalyMessage
+from iot_design_example.infra import Connection, declare_exchanges, declare_alarm_queue
 
 import json
 import sys
@@ -34,3 +35,14 @@ class AlarmConsumer:
         print("Waiting for alarms on alarm_queue")
 
         self.channel.start_consuming()
+
+
+if __name__ == "__main__":
+
+    with Connection() as connection:
+        channel = connection.channel()
+        declare_exchanges(channel)
+        declare_alarm_queue(channel)
+
+        consumer = AlarmConsumer(channel)
+        consumer.start_consuming()
