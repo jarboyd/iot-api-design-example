@@ -88,7 +88,7 @@ class Producer:
         self.CHANNEL = channel
         self.ROUTING_KEY = routing_key
 
-    @retry(tries=5, delay=1, backoff=2)
+    @retry(tries=5, delay=1, backoff=2, max_delay=10)
     def __publish_with_retry(self, message: SensorMessage):
         self.CHANNEL.basic_publish(
             exchange=Exchange.sensor_values,
