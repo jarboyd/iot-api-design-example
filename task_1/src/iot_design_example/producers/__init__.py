@@ -8,7 +8,7 @@ import random
 
 from retry import retry
 
-from iot_design_example.infra import Exchange
+from task_1.src.iot_design_example.infra import Exchange
 
 
 class SensorType(int, Enum):

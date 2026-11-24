@@ -8,11 +8,11 @@ from pika import DeliveryMode
 from pika.channel import Channel
 from pika.spec import Basic, BasicProperties
 
-from iot_design_example.infra import (
+from task_1.src.iot_design_example.infra import (
     Exchange,
 )
 
-from iot_design_example.producers import (
+from task_1.src.iot_design_example.producers import (
     RoutingKey,
     SensorMessage
 )

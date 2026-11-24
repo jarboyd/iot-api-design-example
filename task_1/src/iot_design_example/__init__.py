@@ -1,14 +1,14 @@
 from multiprocessing import Process
 
-from iot_design_example.consumers import (
+from task_1.src.iot_design_example.consumers import (
     MonitorConsumer,
     AnomalyConsumer,
     AlarmConsumer,
     SensorAggregationMaxTemperatureConsumer,
     SensorAggregationAvgTemperatureConsumer,
 )
-from iot_design_example.infra import Connection, declare_exchanges, declare_alarm_queue
-from iot_design_example.producers import (
+from task_1.src.iot_design_example.infra import Connection, declare_exchanges, declare_alarm_queue
+from task_1.src.iot_design_example.producers import (
     MockHumidityProducer,
     MockPressureProducer,
     MockTemperatureProducer,

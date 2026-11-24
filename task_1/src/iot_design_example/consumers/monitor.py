@@ -8,14 +8,14 @@ import json
 from pika.channel import Channel
 from pika.spec import Basic, BasicProperties
 
-from iot_design_example.infra import Exchange
-from iot_design_example.producers import (
+from task_1.src.iot_design_example.infra import Exchange
+from task_1.src.iot_design_example.producers import (
     SensorMessage, 
     AnomalyMessage,
     AnomalyLevel,    
     SensorType,
 )
-from iot_design_example.consumers.aggregration import (
+from task_1.src.iot_design_example.consumers.aggregration import (
     AggregationMessage,
     AggregationType
 )
