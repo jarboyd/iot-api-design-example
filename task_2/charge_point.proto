@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package charging.chargepoint.v1;
+
+enum ChargePointStatus {
+    Charge_Point_Status_UNSPECIFIED = 0;
+    Charge_Point_Status_AVAILABLE = 1;
+    Charge_Point_Status_OCCUPIED = 2;
+    Charge_Point_Status_OUT_OF_SERVICE = 3;
+    
+}
+
+message ChargePoint {
+  string charge_pint_id = 1;
+  ChargePointStatus status = 2;
+}
+
