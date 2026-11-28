@@ -33,6 +33,10 @@ class ChargePointService(charge_point_pb2_grpc.ChargePointServiceServicer):
 
     def ReserveChargePoint(self, request, context):
 
+        metadata = dict(context.invocation_metadata())
+        correlation_id = metadata.get("x-correlation-id", "unknown")
+        print("ReserveChargePoint - Correlation ID:", correlation_id)
+
         if not request.charge_point_id:
             context.abort(
                 grpc.StatusCode.INVALID_ARGUMENT,
