@@ -3,15 +3,26 @@ syntax = "proto3";
 package charging.chargepoint.v1;
 
 enum ChargePointStatus {
-    Charge_Point_Status_UNSPECIFIED = 0;
-    Charge_Point_Status_AVAILABLE = 1;
-    Charge_Point_Status_OCCUPIED = 2;
-    Charge_Point_Status_OUT_OF_SERVICE = 3;
-    
+    CHARGE_POINT_STATUS_UNSPECIFIED = 0;
+    CHARGE_POINT_STATUS_AVAILABLE = 1;
+    CHARGE_POINT_STATUS_OCCUPIED = 2;
+    CHARGE_POINT_STATUS_OUT_OF_SERVICE = 3;
 }
 
 message ChargePoint {
-  string charge_pint_id = 1;
+  string charge_point_id = 1;
   ChargePointStatus status = 2;
 }
 
+message GetChargePointRequest {
+  string charge_point_id = 1;
+}
+
+message ReserveChargePointRequest {
+  string charge_point_id = 1;
+}
+
+service ChargePointService {
+  rpc GetChargePoint(GetChargePointRequest) returns (ChargePoint);
+  rpc ReserveChargePoint(ReserveChargePointRequest) returns (ChargePoint);
+}
